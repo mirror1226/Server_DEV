@@ -1,0 +1,77 @@
+starting...
+user:218.193.190.194 come, total:1
+#010101#五子棋
+in parse instruction
+instruction:#010101#五子棋
+游戏 五子棋 不存在
+五子棋游戏注册成功！
+#010201#五子棋$changych&12345&12345&cyc@gmail.com
+in parse instruction
+instruction:#010201#五子棋$changych&12345&12345&cyc@gmail.com
+玩家 changych 不存在
+changych玩家注册成功
+#010202#五子棋$changych
+in parse instruction
+instruction:#010202#五子棋$changych
+changych玩家注销成功
+#010102#五子棋
+in parse instruction
+instruction:#010102#五子棋
+五子棋游戏注销成功
+
+##################################################################
+
+starting...
+user:218.193.190.194 come, total:1
+#010101#五子棋
+in parse instruction
+instruction:#010101#五子棋
+游戏 五子棋 不存在
+五子棋游戏注册成功！
+#010201#五子棋$changych&12345&12345&cyc@gmail.com
+in parse instruction
+instruction:#010201#五子棋$changych&12345&12345&cyc@gmail.com
+玩家 changych 不存在
+changych玩家注册成功
+#010201#五子棋$changrui&1245&1345&rui@gmail.com
+in parse instruction
+instruction:#010201#五子棋$changrui&1245&1345&rui@gmail.com
+玩家 changrui 不存在
+changrui玩家注册成功
+#010203#五子棋$changych&12345&218.193.190.194
+in parse instruction
+instruction:#010203#五子棋$changych&12345&218.193.190.194
+changych玩家登录成功！
+#010203#五子棋$changrui&1245&218.193.190.199
+in parse instruction
+instruction:#010203#五子棋$changrui&1245&218.193.190.199
+changrui玩家登录成功！
+#010211#五子棋$changrui&changych
+in parse instruction
+instruction:#010211#五子棋$changrui&changych
+changrui成功向changych发出好友请求！
+#010212#五子棋$changrui&changych
+in parse instruction
+instruction:#010212#五子棋$changrui&changych
+changych同意添加changrui为好友！
+#010221#五子棋$changrui&30.435432&120.368456
+in parse instruction
+instruction:#010221#五子棋$changrui&30.435432&120.368456
+changrui在纬度：30.435432，经度：120.368456
+#010204#五子棋$changych
+in parse instruction
+instruction:#010204#五子棋$changych
+changych玩家下线成功！
+#010202#五子棋$changych
+in parse instruction
+instruction:#010202#五子棋$changych
+changych玩家注销成功
+#010202#五子棋$changrui
+in parse instruction
+instruction:#010202#五子棋$changrui
+changrui玩家注销成功
+#010102#五子棋
+in parse instruction
+instruction:#010102#五子棋
+五子棋游戏注销成功
+
