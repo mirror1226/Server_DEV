@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,14 +11,14 @@ public class DBOperate {
 	private final String rootUserName = "root";
 	
 	//数据库root用户密码
-	private final String rootPassword = "";
+	private final String rootPassword = "chen88240620";
 	
 	//注册驱动语句
 	private final String strRegDriver = "com.mysql.jdbc.Driver";
 	
 	//连接数据库语句
 	private final String strConDB = 
-			"jdbc:mysql://localhost/test?useUnicode=true&characterEncoding=utf8";
+			"jdbc:mysql://localhost/test?useUnicode=true&characterEncoding=GBK";
 	
 	//数据库连接对象
 	private java.sql.Connection conn;
@@ -116,7 +117,7 @@ public class DBOperate {
 	 * 参数：数据库執行语句strQuery
 	 * 返回值：成功返回查询结果 java.sql.ResultSet 对象，失败返回null
 	 */
-	public  java.sql.ResultSet DBQuery (String strQuery)
+	public  java.sql.ResultSet DBQuery (	String strQuery)
 	{
 		try
 		{
@@ -502,66 +503,6 @@ public class DBOperate {
 		
 		return deleteAndClause (gameName + "_" + playerName + "_Message", 
 				fields, values);
-	}
-	
-	/*
-	 * 查询操作
-	 * 参数：表格列表tbls，属性列表fields，where条件语句whereClause
-	 * 返回值：返回找到所有记录的结果集合java.sql.ResultSet对象
-	 */
-	public java.sql.ResultSet Query(List<String> tbls, List<String> fields, 
-			String whereClause) 
-	{
-		//构建sql查询语句
-		String strQuery = "select ";
-		for (int i = 0; i < fields.size(); i ++)
-		{
-			String field = fields.get(i);
-			strQuery += field + " ";
-			if (i < fields.size() - 1)
-			{
-				strQuery += ",";
-			}
-		}
-		strQuery += " from ";
-		for (int i = 0; i < tbls.size(); i ++)
-		{
-			String tbl = tbls.get(i);
-			strQuery += tbl + " ";
-			if (i < tbls.size() - 1)
-			{
-				strQuery += ",";
-			}
-		}
-		if (whereClause != null && !whereClause.equals(""))
-		{
-			strQuery = strQuery + " where " + whereClause;
-		}
-		
-		//执行sql语句
-		java.sql.ResultSet rs = DBQuery(strQuery);
-		return rs;
-	}
-
-	/*
-	 * 修改操作
-	 * 参数：表格名称tblName，属性取值列表keyValues，where条件语句whereClause
-	 * 返回值：修改成功返回1，否则返回0
-	 */
-	public int Update(String tblName, List<String> keyValues, String whereClause)
-	{
-		String strUpdate = "update " + tblName + " set ";
-		for (int i = 0; i < keyValues.size(); i ++)
-		{
-			String keyValue = keyValues.get(i);
-			strUpdate += keyValue + " ";
-			if(i < keyValues.size() - 1)
-			{
-				strUpdate += ",";
-			}
-		}
-		strUpdate += " where " + whereClause;
-		return DBUpdate(strUpdate);
 	}
 	
 	/*

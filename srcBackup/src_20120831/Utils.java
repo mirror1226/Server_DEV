@@ -41,9 +41,4 @@ public class Utils
 		}
 	}
 
-	public static double distance(double latA, double lngA, double latB, double lngB){
-		//计算两个经纬度之间的距离
-		double C = Math.sin(latA)*Math.sin(latB) + Math.cos(latA)*Math.cos(latB)*Math.cos(lngA-lngB);
-		return 6400 * Math.acos(C);
-	}
 }

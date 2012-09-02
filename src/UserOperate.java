@@ -1,3 +1,6 @@
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class UserOperate {
@@ -181,7 +184,7 @@ public class UserOperate {
 		// 错误提示
 		String errMsg = "";
 
-		// 搜索该游戏是否已注册
+		// 搜索该玩家是否已注册
 		if (isPlayerReg(gameName, playerName) == 0) {
 			errMsg = "玩家 " + playerName + " 未存在";
 			System.out.println(errMsg);
@@ -192,7 +195,7 @@ public class UserOperate {
 				+ " where username = '" + playerName + "'";
 		java.sql.ResultSet rsPlayer = dbOperate.DBQuery(strQueryPlayer);
 
-		// 搜索该玩家是否已注册
+		// 搜索该玩家是否在线
 		try {
 			if (rsPlayer.first()) {
 				return 1;
@@ -296,9 +299,14 @@ public class UserOperate {
 				isPlayerReg (gameName, playerNameRec) == 0)
 			return 0;
 		
-		//将发送请求的玩家加入好友列表
+		//将发送请求的玩家加入被请求的玩家的好友列表
 		FriendInfo friendInfo = new FriendInfo (playerNameReq);
 		if (dbOperate.InsertFriendClause(gameName, playerNameRec, friendInfo) != 1)
+			return 0;
+		
+		//将被请求的玩家加入发送请求的玩家的好友列表
+		friendInfo = new FriendInfo (playerNameRec);
+		if (dbOperate.InsertFriendClause(gameName, playerNameReq, friendInfo) != 1)
 			return 0;
 		
 		//将消息列表中的请求消息删除
@@ -352,13 +360,38 @@ public class UserOperate {
 	 * 返回值：周边用户的用户名与经纬度，错误值返回0
 	 * Example：Result,test1:1.1111 2.2222,test2:3.3333 4.444
 	 */
-	public String SearchNearby(String gameName, String playerName, double latitude, double longtitude)
+	public String SearchNearby(String gameName, String playerName, 
+			double latitude, double longtitude, double range)
 	{
 		//玩家未注册
-		if (isPlayerReg(gameName, playerName) == 0) return "0";
+		if (isPlayerOnline(gameName, playerName) == 0) return "0";
+
+		//提取数据库中记录的用户名、纬度和经度
+		List<String> fields = new ArrayList<String>();
+		fields.add("username");
+		fields.add("latitude");
+		fields.add("longtitude");
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName+ "_Online");
+		java.sql.ResultSet rs = dbOperate.Query(tbls , fields, null);
+		String result = "";
 		
-		String result = dbOperate.selectPlayerNearby(gameName, latitude, longtitude);
-		if (result != null)
+		//筛选记录
+		try {
+			while (rs.next())
+			{
+				double rs_lat = rs.getDouble("latitude");
+				double rs_lng = rs.getDouble("longtitude");
+				String rs_user = rs.getString("username");
+				if (rs_user.compareTo(playerName) != 0 && Utils.distance(latitude, longtitude, rs_lat, rs_lng) <= range)	//在范围内
+					result = result + "#" + rs_user + "&" + Double.toString(rs_lat) + "&" + Double.toString(rs_lng);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "0";
+		}
+
+		if (!result.equals(""))
 		    return result;
 		else return "0";
 	}
@@ -369,14 +402,39 @@ public class UserOperate {
 	 * 返回值：返回与关键字匹配的用户名，错误值返回0
 	 * Example：Result,test1,test2
 	 */
-	public String SearchByID(String gameName, String playerName, String key)
+	public String SearchPlayerByID(String gameName, String playerName, String key)
 	{
 		//玩家未注册
-		if (isPlayerReg(gameName, playerName) == 0) return "0";
+		if (isPlayerReg(gameName, playerName) == 0) 
+			return "0";
 				
-		String result = dbOperate.selectByID(gameName, playerName, key);
-		if (result != null) return result;
-		else return "0";
+		//查询
+		List<String> fields = new ArrayList<String>();
+		fields.add("username");
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName + "_Info");
+		String whereClause = "username like '%" + key + "%'";
+		java.sql.ResultSet rs = dbOperate.Query(tbls, fields, whereClause);
+		
+		String result = "";
+		try 
+		{
+			while (rs.next()) 
+			{
+				if (rs.getString("username").compareTo(playerName) != 0)
+				    result = result + "#" + rs.getString("username");
+			}
+		} 
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+			return "0";
+		}
+
+		if (!result.equals("")) 
+			return result;
+		else 
+			return "0";
 	}
 	
 	/*
@@ -389,41 +447,357 @@ public class UserOperate {
 		//玩家未注册
 		if (isPlayerReg(gameName, playerName) == 0) return "0";
 		
-		String result = dbOperate.selectFriendsOnline(gameName, playerName);
-		if (result != null) return result;
-		else return "0";
+		//查询
+		List<String> fields = new ArrayList<String>();
+		fields.add("name");
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName + "_Online");
+		tbls.add(gameName + "_" + playerName + "_Friend");
+		String whereClause = "username = name;";
+		
+		java.sql.ResultSet rs = dbOperate.Query(tbls, fields, whereClause);
+		String result = "";
+		try {
+			while (rs.next()) {
+				result = result + "#" + rs.getString(gameName + "_" + playerName + "_Friend.name");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "0";
+		}
+		
+		if (!result.equals("")) 
+			return result;
+		else 
+			return "0";
 	}
 	
 	/*
 	 * 返回用户playerName的相关消息
 	 * 返回值：返回消息类型、日期、请求用户、消息内容
-	 * Example：Result,REQ:2012-08-20:test1:friendship,ACK:2012-08-21:test2:hello world
+	 * Example：#REQ&2012-08-20&test1&friendship#ACK&2012-08-21&test2&hello world
 	 */
 	public String GetMessage(String gameName, String playerName) 
 	{
 		//玩家未注册
 		if (isPlayerReg(gameName, playerName) == 0) return "0";
 		
-		String result = dbOperate.selectMessage(gameName, playerName);
-		if (result != null) return result;
-		else return "0";
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName + "_" + playerName + "_Message");
+		List<String> fields = new ArrayList<String>();
+		fields.add("type");
+		fields.add("date");
+		fields.add("srcName");
+		fields.add("content");
+		java.sql.ResultSet rs = dbOperate.Query(tbls, fields, null);
+		String result = "";
+		try {
+			while (rs.next()) {
+				result = result + "#" + rs.getString("type") + "&" + rs.getString("date") 
+						+ "&" + rs.getString("srcName") + "&" + rs.getString("content");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "0";
+		}
+		
+		if (result != null && !result.equals("")) 
+			return result;
+		else 
+			return "0";
 	}
 	
 	/*
 	 * 查询指定好友信息
 	 * 返回值：好友名字、电话、email
-	 * Example：Result,test1 123456 test1@sjtu.edu.cn
+	 * Example：#test1&123456&test1@sjtu.edu.cn
 	 */
 	public String GetFriendInfo(String gameName, String playerName, String friend) {
+		
 		//玩家未注册
-		if (isPlayerReg(gameName, playerName) == 0) return "0";
+		if (isPlayerReg(gameName, playerName) == 0) 
+			return "0";
 		
 		//判断friend是否为playerName的好友
-		if (dbOperate.isFriend(gameName,playerName,friend) == 0) return "0";
-		else {
-			String result = dbOperate.selectFriendInfo(gameName, friend);
-			if (result != null) return result;
+		if (isFriend(gameName,playerName,friend) == 0) 
+			return "0";
+		
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName + "_Info");
+		List<String> fields = new ArrayList<String>();
+		fields.add("username");
+		fields.add("phone");
+		fields.add("Email");
+		String whereClause = " username = " + "'" + friend + "'";
+		java.sql.ResultSet rs = dbOperate.Query(tbls, fields, whereClause);
+		
+		String result = "";
+		try {
+			if (rs.next()) {
+				result = result + "#" + rs.getString("username") + "&" 
+						+ rs.getString("phone") + "&" + rs.getString("Email");
+			}
 			else return "0";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "0";
+		}
+		
+		if (result != null && !result.equals("")) 
+			return result;
+		else 
+			return "0";
+		
+	}
+	
+	/*
+	 * 判断玩家是否为好友
+	 * 参数：游戏名称gameName，玩家名称playerName，好友名称friend
+	 * 返回值：如果是返回1，否则返回0
+	 */
+	public int isFriend(String gameName, String playerName, String friend) {
+		
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName + "_" + playerName + "_Friend");
+		List<String> fields = new ArrayList<String>();
+		fields.add("name");
+		java.sql.ResultSet rs = dbOperate.Query(tbls, fields, null);
+		
+		try {
+			if (rs.next()) 
+				return 1;
+			else 
+				return 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return 0;
+		}
+	}
+	
+	/*
+	 * 玩家准备游戏
+	 * 参数：游戏名称gameName，玩家名称playerName
+	 * 返回值：玩家成功设置准备状态返回1，否则返回0
+	 */
+	public int ReadyForGame(String gameName, String playerName)
+	{
+		//错误信息
+		String errMsg = "";
+	
+		//玩家不在线
+		if (isPlayerOnline(gameName, playerName) == 0) return 0;
+		
+		//判断玩家状态
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName + "_Online");
+		List<String> fields = new ArrayList<String>();
+		fields.add("status");
+		String whereClause = " username = " + "'" + playerName + "'";
+		java.sql.ResultSet rs = dbOperate.Query(tbls, fields, whereClause);
+		
+		try
+		{
+			rs.next();
+			String status = rs.getString("status");
+			//玩家不在线
+			if(status.equals(String.valueOf(PlayerOnlineInfo.OFFLINE)))
+			{
+				errMsg = "玩家" + playerName + "不在线";
+				System.out.println(errMsg);
+				return 0;
+			}
+			//玩家在游戏中
+			else if(status.equals(String.valueOf(PlayerOnlineInfo.PLAYING)))
+			{
+				errMsg = "玩家" + playerName + "正在游戏中";
+				System.out.println(errMsg);
+				return 0;
+			}
+			//玩家在线或已准备
+			else
+			{
+				String tblName = gameName + "_Online";
+				List<String> keyValues = new ArrayList<String>();
+				keyValues.add("status = " + String.valueOf(PlayerOnlineInfo.READY));
+				whereClause = "username = '" + playerName + "'";
+				if(dbOperate.Update(tblName, keyValues, whereClause) == 1)
+				{
+					System.out.println("玩家" + playerName + "已准备游戏！");
+					return 1;
+				}
+				else
+					return 0;
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return 0;
+		}
+	}
+	
+	/*
+	 * 玩家取消准备游戏
+	 * 参数：游戏名称gameName，玩家名称playerName
+	 * 返回值：玩家成功设置准备状态返回1，否则返回0
+	 */
+	public int CancelReadyForGame(String gameName, String playerName)
+	{
+		//错误信息
+		String errMsg = "";
+	
+		//玩家不在线
+		if (isPlayerOnline(gameName, playerName) == 0) return 0;
+		
+		//判断玩家状态
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName + "_Online");
+		List<String> fields = new ArrayList<String>();
+		fields.add("status");
+		String whereClause = " username = " + "'" + playerName + "'";
+		java.sql.ResultSet rs = dbOperate.Query(tbls, fields, whereClause);
+		
+		try
+		{
+			rs.next();
+			String status = rs.getString("status");
+			//玩家不在准备状态
+			if(!status.equals(String.valueOf(PlayerOnlineInfo.READY)))
+			{
+				errMsg = "玩家" + playerName + "不在准备状态";
+				System.out.println(errMsg);
+				return 0;
+			}
+			//玩家已准备
+			else
+			{
+				String tblName = gameName + "_Online";
+				List<String> keyValues = new ArrayList<String>();
+				keyValues.add("status = " + String.valueOf(PlayerOnlineInfo.ONLINE));
+				whereClause = "username = '" + playerName + "'";
+				if(dbOperate.Update(tblName, keyValues, whereClause) == 1)
+				{
+					System.out.println("玩家" + playerName + "已取消准备！");
+					return 1;
+				}
+				else
+					return 0;
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return 0;
+		}
+	}
+	
+	/*
+	 * 玩家开始游戏
+	 * 参数：游戏名称gameName，玩家名称playerName
+	 * 返回值：玩家成功设置准备状态返回1，否则返回0
+	 */
+	public int StartForGame(String gameName, String playerName)
+	{
+		//错误信息
+		String errMsg = "";
+	
+		//玩家不在线
+		if (isPlayerOnline(gameName, playerName) == 0) return 0;
+		
+		//判断玩家状态
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName + "_Online");
+		List<String> fields = new ArrayList<String>();
+		fields.add("status");
+		String whereClause = " username = " + "'" + playerName + "'";
+		java.sql.ResultSet rs = dbOperate.Query(tbls, fields, whereClause);
+		
+		try
+		{
+			rs.next();
+			String status = rs.getString("status");
+			//玩家不在准备状态
+			if(!status.equals(String.valueOf(PlayerOnlineInfo.READY)))
+			{
+				errMsg = "玩家" + playerName + "不在准备状态";
+				System.out.println(errMsg);
+				return 0;
+			}
+			//玩家已准备
+			else
+			{
+				String tblName = gameName + "_Online";
+				List<String> keyValues = new ArrayList<String>();
+				keyValues.add("status = " + String.valueOf(PlayerOnlineInfo.PLAYING));
+				whereClause = "username = '" + playerName + "'";
+				if(dbOperate.Update(tblName, keyValues, whereClause) == 1)
+				{
+					System.out.println("玩家" + playerName + "已开始游戏！");
+					return 1;
+				}
+				else
+					return 0;
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return 0;
+		}
+	}
+	
+	/*
+	 * 玩家结束游戏
+	 * 参数：游戏名称gameName，玩家名称playerName
+	 * 返回值：玩家成功设置准备状态返回1，否则返回0
+	 */
+	public int EndForGame(String gameName, String playerName)
+	{
+		//错误信息
+		String errMsg = "";
+	
+		//玩家不在线
+		if (isPlayerOnline(gameName, playerName) == 0) return 0;
+		
+		//判断玩家状态
+		List<String> tbls = new ArrayList<String>();
+		tbls.add(gameName + "_Online");
+		List<String> fields = new ArrayList<String>();
+		fields.add("status");
+		String whereClause = " username = " + "'" + playerName + "'";
+		java.sql.ResultSet rs = dbOperate.Query(tbls, fields, whereClause);
+		
+		try
+		{
+			rs.next();
+			String status = rs.getString("status");
+			//玩家不在准备状态
+			if(!status.equals(String.valueOf(PlayerOnlineInfo.PLAYING)))
+			{
+				errMsg = "玩家" + playerName + "不在游戏中";
+				System.out.println(errMsg);
+				return 0;
+			}
+			//玩家在游戏中
+			else
+			{
+				String tblName = gameName + "_Online";
+				List<String> keyValues = new ArrayList<String>();
+				keyValues.add("status = " + String.valueOf(PlayerOnlineInfo.ONLINE));
+				whereClause = "username = '" + playerName + "'";
+				if(dbOperate.Update(tblName, keyValues, whereClause) == 1)
+				{
+					System.out.println("玩家" + playerName + "已结束游戏！");
+					return 1;
+				}
+				else
+					return 0;
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return 0;
 		}
 	}
 	

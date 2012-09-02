@@ -2,10 +2,10 @@
 public class PlayerOnlineInfo {
 	
 	//玩家状态取值
-	public static final int OFFLINE = 1;
-	public static final int ONLINE = 2;
-	public static final int READY = 3;
-	public static final int PLAYING = 4;
+	private static final int OFFLINE = 1;
+	private static final int ONLINE = 2;
+	private static final int READY = 3;
+	private static final int PLAYING = 4;
 	
 	//玩家名称
 	private String username;
