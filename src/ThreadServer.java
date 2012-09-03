@@ -215,7 +215,7 @@ public class ThreadServer implements Runnable {
 	/*
 	 * 玩家控制指令中对自身操作的执行函数 参数：功能号type，内容content 返回值：执行成功返回1，否则返回0
 	 */
-	private int ExecPlayerCtlItself(String type, String content) {
+	private String ExecPlayerCtlItself(String type, String content) {
 		// 解析指令内容
 		String fields[] = content.split("\\$");
 		String gameName = fields[0];
@@ -235,14 +235,14 @@ public class ThreadServer implements Runnable {
 
 			PlayerInfo playerInfo = new PlayerInfo(playerName, password, phone,
 					Email);
-			return playerOperate.RegPlayer(gameName, playerInfo);
+			return playerOperate.RegPlayer(gameName, playerInfo)+"";
 
 			// 玩家注销
 		case "02":
 
 			// 玩家信息playerContent：玩家名称
 			playerName = playerContent;
-			return playerOperate.unRegPlayer(gameName, playerName);
+			return playerOperate.unRegPlayer(gameName, playerName)+"";
 
 			// 玩家登陆上线
 		case "03":
@@ -255,46 +255,46 @@ public class ThreadServer implements Runnable {
 
 			PlayerOnlineInfo playerOnlineInfo = new PlayerOnlineInfo(
 					playerName, IPAdr);
-			return playerOperate.Login(gameName, password, playerOnlineInfo);
+			return playerOperate.Login(gameName, password, playerOnlineInfo)+"";
 
 			// 玩家下线
 		case "04":
 
 			// 玩家信息playerContent：玩家名称
 			playerName = playerContent;
-			return playerOperate.Logout(gameName, playerName);
+			return playerOperate.Logout(gameName, playerName)+"";
 
 			// 玩家准备开始游戏
 		case "05":
 			playerName = playerContent;
-			return playerOperate.ReadyForGame(gameName, playerName);
+			return playerOperate.ReadyForGame(gameName, playerName)+"";
 			
 			// 玩家取消游戏准备
 		case "06":
 			playerName = playerContent;
-			return playerOperate.CancelReadyForGame(gameName, playerName);
+			return playerOperate.CancelReadyForGame(gameName, playerName)+"";
 			
 			// 显示玩家消息
 		case "07":
 			playerName = playerContent;
 			String message = playerOperate.GetMessage(gameName, playerName);
 			if(!message.equals("0"))
-				return 1;
+				return message;
 			else
-				return 0;
+				return "0";
 			
 			//玩家开始游戏
 		case "08":
 			playerName = playerContent;
-			return playerOperate.StartForGame(gameName, playerName);
+			return playerOperate.StartForGame(gameName, playerName)+"";
 			
 			//玩家结束游戏
 		case "09":
 			playerName = playerContent;
-			return playerOperate.EndForGame(gameName, playerName);
+			return playerOperate.EndForGame(gameName, playerName)+"";
 
 		default:
-			return 0;
+			return "0";
 		}
 	}
 
@@ -315,9 +315,10 @@ public class ThreadServer implements Runnable {
 			String info[] = playerContent.split("&");
 			String playerNameReq = info[0];
 			String playerNameRec = info[1];
+			String msgContent = info[2];
 
 			return playerOperate.RepForFriend(gameName, playerNameReq,
-					playerNameRec) + "";
+					playerNameRec, msgContent) + "";
 
 			// 同意添加好友
 		case "12":
@@ -325,9 +326,10 @@ public class ThreadServer implements Runnable {
 			info = playerContent.split("&");
 			playerNameReq = info[0];
 			playerNameRec = info[1];
+			msgContent = info[2];
 
 			return playerOperate.AckForFriend(gameName, playerNameReq,
-					playerNameRec) + "";
+					playerNameRec, msgContent) + "";
 
 			// 拒绝添加好友
 		case "13":
@@ -335,9 +337,10 @@ public class ThreadServer implements Runnable {
 			info = playerContent.split("&");
 			playerNameReq = info[0];
 			playerNameRec = info[1];
+			msgContent = info[2];
 
 			return playerOperate.RefForFriend(gameName, playerNameReq,
-					playerNameRec) + "";
+					playerNameRec, msgContent) + "";
 
 			// 玩家选中好友进行游戏
 		case "14":

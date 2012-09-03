@@ -268,14 +268,13 @@ public class UserOperate {
 	 * 返回值：成功发送请求返回1，否则返回0
 	 */
 	public int RepForFriend (String gameName, String playerNameReq,
-			String playerNameRec)
+			String playerNameRec, String msgContent)
 	{
 		//玩家未注册
 		if (isPlayerReg(gameName, playerNameReq) == 0 || 
 				isPlayerReg (gameName, playerNameRec) == 0)
 			return 0;
-		String content = "Apply for friendship!";
-		MessageInfo messageInfo = new MessageInfo (MessageInfo.FRIENDREQ, playerNameReq, content);
+		MessageInfo messageInfo = new MessageInfo (MessageInfo.FRIENDREQ, playerNameReq, msgContent);
 		if (dbOperate.InsertMessageClause(gameName, playerNameRec, messageInfo) == 1)
 		{
 			System.out.println (playerNameReq + "成功向" + playerNameRec + "发出好友请求！");
@@ -292,7 +291,7 @@ public class UserOperate {
 	 * 返回值：成功发送请求返回1，否则返回0
 	 */
 	public int AckForFriend (String gameName, String playerNameReq,
-			String playerNameRec)
+			String playerNameRec, String msgContent)
 	{
 		//玩家未注册
 		if (isPlayerReg(gameName, playerNameReq) == 0 || 
@@ -318,7 +317,7 @@ public class UserOperate {
 		
 		//将同意添加好友的消息插入到发送请求的玩家的消息列表
 		messageInfo = new MessageInfo (MessageInfo.FRIENDACK,
-				playerNameRec);
+				playerNameRec, msgContent);
 		if (dbOperate.InsertMessageClause(gameName, playerNameReq, messageInfo) != 1)
 			return 0;
 		
@@ -334,7 +333,7 @@ public class UserOperate {
 	 * 			 被请求方玩家名称playerNameRec
 	 * 返回值：成功发送请求返回1，否则返回0
 	 */
-	public int RefForFriend (String gameName, String playerNameReq, String playerNameRec)
+	public int RefForFriend (String gameName, String playerNameReq, String playerNameRec, String msgContent)
 	{
 		//玩家未注册
 		if (isPlayerReg(gameName, playerNameReq) == 0 || isPlayerReg (gameName, playerNameRec) == 0)
@@ -346,7 +345,7 @@ public class UserOperate {
 			return 0;
 				
 		//将拒绝添加好友的消息插入到发送请求的玩家的消息列表
-		messageInfo = new MessageInfo (MessageInfo.FRIENDREF, playerNameRec);
+		messageInfo = new MessageInfo (MessageInfo.FRIENDREF, playerNameRec, msgContent);
 		if (dbOperate.InsertMessageClause(gameName, playerNameReq, messageInfo) != 1)
 			return 0;
 				
